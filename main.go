@@ -2,7 +2,7 @@ package main
 
 import  (
 	"fmt"
-	"strconv"
+	// "strconv"
 	"time"
 	"flag"
 	"net/http"
@@ -27,7 +27,10 @@ func main()  {
 	grabticker := time.NewTicker(10 * time.Second)
 	docstats := stats.NewCounter()
 	nodePtr := flag.String("node", "", "Elastic Node")
+	var lastcpu int
+	var fsused, fstot float64
 	var node string
+	var heapmax, heapused float64
 
 	flag.Parse()
 
@@ -43,12 +46,20 @@ func main()  {
 			case <-grabticker.C:
 				s := new(ClusterStats)
                 getJson("http://" + node + ":9200/_cluster/stats", s)
-				fmt.Println("Grabbing stats from: ",node, " Docs: ",  strconv.Itoa(s.Indices.Docs.Count))
+				// fmt.Println("Grabbing stats from: ",node, " Docs: ",  strconv.Itoa(s.Indices.Docs.Count))
+				lastcpu = s.Nodes.Process.CPU.Percent
+
+				fsused = (float64(s.Nodes.Fs.TotalInBytes) - float64(s.Nodes.Fs.AvailableInBytes)) / 1024 / 1024 / 1024
+				fstot = float64(s.Nodes.Fs.TotalInBytes) / 1024 / 1024 / 1024
+				//											KB	   MB	  GB	
+				heapmax = float64(s.Nodes.Jvm.Mem.HeapMaxInBytes) / 1024 / 1024 / 1024
+				heapused = float64(s.Nodes.Jvm.Mem.HeapUsedInBytes) / 1024 / 1024 / 1024
+		
                 docstats.Set(int64(s.Indices.Docs.Count))
 
 			case <-outticker.C:
-				fmt.Println("Outputting stats")
-				fmt.Printf("Doc count: %d, Docs/Sec: %.2f\n", docstats.Value(), docstats.Rate1m())
+				t := time.Now()
+				fmt.Printf("Time: %s,  CPU: %d,  Heap Used/Total: %.2fGB/%.2fGB, Doc count: %d, Docs/Sec: %.2f Disk Size/Avail: %.2fGB/%.2fGB\n", t.Format("2006-01-02 15:04:05"), lastcpu, heapused, heapmax, docstats.Value(), docstats.Rate1m(), fsused, fstot)
 				
 		}				
 	}

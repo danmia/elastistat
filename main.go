@@ -59,7 +59,7 @@ func main()  {
 
 			case <-outticker.C:
 				t := time.Now()
-				fmt.Printf("Time: %s,  CPU: %d,  Heap Used/Total: %.2fGB/%.2fGB, Doc count: %d, Docs/Sec: %.2f Disk Size/Avail: %.2fGB/%.2fGB\n", t.Format("2006-01-02 15:04:05"), lastcpu, heapused, heapmax, docstats.Value(), docstats.Rate1m(), fsused, fstot)
+				fmt.Printf("Time: %s,  CPU: %d,  Heap Used/Total: %.2fGB/%.2fGB, Doc count: %d, Docs/Sec: %.2f, Disk Size/Avail: %.2fGB/%.2fGB\n", t.Format("2006-01-02 15:04:05"), lastcpu, heapused, heapmax, docstats.Value(), docstats.Rate1m(), fsused, fstot)
 				
 		}				
 	}
